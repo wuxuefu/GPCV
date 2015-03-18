@@ -1,0 +1,4 @@
+
+export PATH="$PATH:/system/sbin:/system/bin"
+
+export LD_LIBRARY_PATH="/lib:/usr/lib:/system/lib"

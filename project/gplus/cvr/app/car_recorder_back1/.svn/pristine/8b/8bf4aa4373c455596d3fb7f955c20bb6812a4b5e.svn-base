@@ -1,0 +1,331 @@
+#include "CloudDog.h"
+#include "ap_state_config.h"
+#include "font.h"
+#include "disp.h"
+
+
+#define X_POS 0
+#define Y_POS 0
+#define __MODULE__          "CloudDog_app"
+#define __DBGLVL__          3 // 0=OFF, 1=ERROR, 2=WAENING 3=MSG 4=ALL
+#define __DBGNAME__         printf
+#include "dbgs.h"
+extern HANDLE hDisp;
+extern UINT8 HDMIxNum;
+extern dv_set_t dv_set;
+static gp_size_t lcd_size={0};
+static void *gp_dogDispBuf=NULL;
+static void *packData=NULL;
+char cloudDogString[7][500]={ //0 启动安防开机协议
+                     {0x41,0x54,0x55,0x08,0x00,0x20,0x00,0x01,0x13,'\n'},
+                     //1 GPS 信息
+                     {0x41,0x54,0x55,0x21,0x00,0x10,0x41,0x3A,0x0B,0x23,0x00, 0x4E,0x7A,0xCE,0xAD,0x00,0x45,0x1C,0x32,0x00,0x00,0x00,0x00, 0xDB,0x07,0x03,0x07,0x11,0x37,0x23,0x1F,0x01,0x00,0x11,'\n'},
+                     //2 固定报警信息
+                     {0x41,0x54,0x55,0x3C,0x00,0x11,0x02,0x4C,0x01,0x3C,0x2B,0x8A,0x00,0x00,0x4D,0x52,0xB9,0x65,0x33,0x00,0x30,0x00,0x30,0x00,0x73,0x7C,0x09,0x67,0xEF,0x95,0xA2,0x7E,0x6F,0x70,0xCD,0x62,0x67,0x71,0x2C,0x00,0x50,0x96,0x1F,0x90,0x36,0x00,0x30,0x00,0x6C,0x51,0xCC,0x91,0x2C,0x00,0xF7,0x8B,0xE8,0x6C,0x0F,0x61,0x63,'\n'},
+                     //3 雷达报警信息
+                     {0x41,0x54,0x55,0x0E,0x00,0x12,0x20,0x02,0xFF,0xFF,0x24,0x2C,0x00,0x00,0x7A,'\n'},
+                     //4 功能菜单信息获取
+                     {0x41,0x54,0x55,0x1E,0x00,0x13,0x00,0x06,0x32,0x78,0x01,0x0A,0x00,0xB6,0x00,0x53,0x96,0x75,0x30,0x30,0x35,0x75,0x08,0x31,0x14,0x72,0x36,0x89,0x04,0x00,0x76,'\n'},
+                     //5 天气预报
+                     {0x41,0x54,0x55,0x27,0x00,0x18,0xAA,0xF1,0x6D,0x33,0x57,0x02,0x5E,0x20,0x00,0x32,0x00,0x36,0x00,0x2D,0x00,0x33,0x00,0x32,0x00,0x44,0x64,0x0F,0x6C,0xA6,0x5E,0x20,0x00,0x35,0x96,0xE8,0x96,0x20,0x00,0xE5,'\n'},
+                     //6 投诉键协议
+                     {0x41,0x54,0x55,0x07,0x00,0x19,0x01,0x0B,0x0D,0x0A,'\n'},
+                    };
+ 
+iconManager_t Icon_Manager_CloudDog[DOG_ICON_NUM_MAX]={
+
+{"R_BAT_0.bmp"	,DOG_ICON_R_BAT_0	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_BAT_1.bmp"	,DOG_ICON_R_BAT_1	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_BAT_2.bmp"	,DOG_ICON_R_BAT_2	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_BAT_3.bmp"	,DOG_ICON_R_BAT_3	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_1.bmp"	,DOG_ICON_R_COMPASS_1	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_2.bmp"	,DOG_ICON_R_COMPASS_2	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_3.bmp"	,DOG_ICON_R_COMPASS_3	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_4.bmp"	,DOG_ICON_R_COMPASS_4	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_5.bmp"	,DOG_ICON_R_COMPASS_5	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_6.bmp"	,DOG_ICON_R_COMPASS_6	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_7.bmp"	,DOG_ICON_R_COMPASS_7	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_8.bmp"	,DOG_ICON_R_COMPASS_8	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_NULL.bmp"	,DOG_ICON_R_COMPASS_NULL	,96	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_S1.bmp"	,DOG_ICON_R_COMPASS_S1	,80	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_S2.bmp"	,DOG_ICON_R_COMPASS_S2	,80	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_S3.bmp"	,DOG_ICON_R_COMPASS_S3	,80	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_COMPASS_S4.bmp"	,DOG_ICON_R_COMPASS_S4	,80	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_OFF.bmp"	,DOG_ICON_R_GPS_OFF	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_ON.bmp"	,DOG_ICON_R_GPS_ON	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM1.bmp"	,DOG_ICON_R_GPS_NUM1	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM2.bmp"	,DOG_ICON_R_GPS_NUM2	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM3.bmp"	,DOG_ICON_R_GPS_NUM3	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM4.bmp"	,DOG_ICON_R_GPS_NUM4	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM5.bmp"	,DOG_ICON_R_GPS_NUM5	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM6.bmp"	,DOG_ICON_R_GPS_NUM6	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM7.bmp"	,DOG_ICON_R_GPS_NUM7	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM8.bmp"	,DOG_ICON_R_GPS_NUM8	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM9.bmp"	,DOG_ICON_R_GPS_NUM9	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM10.bmp"	,DOG_ICON_R_GPS_NUM10	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM11.bmp"	,DOG_ICON_R_GPS_NUM11	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM12.bmp"	,DOG_ICON_R_GPS_NUM12	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM13.bmp"	,DOG_ICON_R_GPS_NUM13	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM14.bmp"	,DOG_ICON_R_GPS_NUM14	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM15.bmp"	,DOG_ICON_R_GPS_NUM15	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM16.bmp"	,DOG_ICON_R_GPS_NUM16	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM17.bmp"	,DOG_ICON_R_GPS_NUM17	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM18.bmp"	,DOG_ICON_R_GPS_NUM18	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM19.bmp"	,DOG_ICON_R_GPS_NUM19	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_GPS_NUM20.bmp"	,DOG_ICON_R_GPS_NUM20	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_0.bmp"	,DOG_ICON_R_NUM_0	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_1.bmp"	,DOG_ICON_R_NUM_1	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_2.bmp"	,DOG_ICON_R_NUM_2	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_3.bmp"	,DOG_ICON_R_NUM_3	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_4.bmp"	,DOG_ICON_R_NUM_4	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_5.bmp"	,DOG_ICON_R_NUM_5	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_6.bmp"	,DOG_ICON_R_NUM_6	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_7.bmp"	,DOG_ICON_R_NUM_7	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_8.bmp"	,DOG_ICON_R_NUM_8	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_NUM_9.bmp"	,DOG_ICON_R_NUM_9	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_K.bmp"	,DOG_ICON_R_RADAR_K	,72	,72	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_KA.bmp"	,DOG_ICON_R_RADAR_KA	,72	,72	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_KU.bmp"	,DOG_ICON_R_RADAR_KU	,72	,72	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_LASER.bmp"	,DOG_ICON_R_RADAR_LASER	,72	,72	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_OFF.bmp"	,DOG_ICON_R_RADAR_OFF	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_ON.bmp"	,DOG_ICON_R_RADAR_ON	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_RADAR_X.bmp"	,DOG_ICON_R_RADAR_X	,72	,72	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SIGNAL_0.bmp"	,DOG_ICON_R_SIGNAL_0	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SIGNAL_1.bmp"	,DOG_ICON_R_SIGNAL_1	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SIGNAL_2.bmp"	,DOG_ICON_R_SIGNAL_2	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SIGNAL_3.bmp"	,DOG_ICON_R_SIGNAL_3	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SIGNAL_4.bmp"	,DOG_ICON_R_SIGNAL_4	,24	,24	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_10.bmp"	,DOG_ICON_R_SPEED_10	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_20.bmp"	,DOG_ICON_R_SPEED_20	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_30.bmp"	,DOG_ICON_R_SPEED_30	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_35.bmp"	,DOG_ICON_R_SPEED_35	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_40.bmp"	,DOG_ICON_R_SPEED_40	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_45.bmp"	,DOG_ICON_R_SPEED_45	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_50.bmp"	,DOG_ICON_R_SPEED_50	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_60.bmp"	,DOG_ICON_R_SPEED_60	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_70.bmp"	,DOG_ICON_R_SPEED_70	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_80.bmp"	,DOG_ICON_R_SPEED_80	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_90.bmp"	,DOG_ICON_R_SPEED_90	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_100.bmp"	,DOG_ICON_R_SPEED_100	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_110.bmp"	,DOG_ICON_R_SPEED_110	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_120.bmp"	,DOG_ICON_R_SPEED_120	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_SPEED_W_NULL.bmp"	,DOG_ICON_R_SPEED_W_NULL	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_02.bmp"	,DOG_ICON_R_WARNING_02	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_20.bmp"	,DOG_ICON_R_WARNING_20	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_22.bmp"	,DOG_ICON_R_WARNING_22	,80	,96	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_70.bmp"	,DOG_ICON_R_WARNING_70	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_71.bmp"	,DOG_ICON_R_WARNING_71	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_72.bmp"	,DOG_ICON_R_WARNING_72	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_73.bmp"	,DOG_ICON_R_WARNING_73	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_81.bmp"	,DOG_ICON_R_WARNING_81	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_83.bmp"	,DOG_ICON_R_WARNING_83	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_84.bmp"	,DOG_ICON_R_WARNING_84	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_85.bmp"	,DOG_ICON_R_WARNING_85	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_87.bmp"	,DOG_ICON_R_WARNING_87	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_88.bmp"	,DOG_ICON_R_WARNING_88	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_89.bmp"	,DOG_ICON_R_WARNING_89	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_90.bmp"	,DOG_ICON_R_WARNING_90	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_91.bmp"	,DOG_ICON_R_WARNING_91	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_92.bmp"	,DOG_ICON_R_WARNING_92	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_93.bmp"	,DOG_ICON_R_WARNING_93	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_94.bmp"	,DOG_ICON_R_WARNING_94	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_95.bmp"	,DOG_ICON_R_WARNING_95	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_96.bmp"	,DOG_ICON_R_WARNING_96	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_97.bmp"	,DOG_ICON_R_WARNING_97	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_98.bmp"	,DOG_ICON_R_WARNING_98	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_99.bmp"	,DOG_ICON_R_WARNING_99	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_101.bmp"	,DOG_ICON_R_WARNING_101	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_102.bmp"	,DOG_ICON_R_WARNING_102	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_108.bmp"	,DOG_ICON_R_WARNING_108	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"R_WARNING_110.bmp"	,DOG_ICON_R_WARNING_110	,72	,88	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RADAR_MAXSPEED.bmp"	,DOG_ICON_RADAR_MAXSPEED	,32	,32	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RADAR_MODE.bmp"	,DOG_ICON_RADAR_MODE	,32	,32	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RADAR_MUTE.bmp"	,DOG_ICON_RADAR_MUTE	,32	,32	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RADAR_SPEED.bmp"	,DOG_ICON_RADAR_SPEED	,32	,32	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RADAR_VER.bmp"	,DOG_ICON_RADAR_VER	,32	,32	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RADAR_VOLUMEA.bmp"	,DOG_ICON_RADAR_VOLUMEA	,32	,32	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_0.bmp"	,DOG_ICON_RR_NUM_0	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_1.bmp"	,DOG_ICON_RR_NUM_1	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_2.bmp"	,DOG_ICON_RR_NUM_2	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_3.bmp"	,DOG_ICON_RR_NUM_3	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_4.bmp"	,DOG_ICON_RR_NUM_4	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_5.bmp"	,DOG_ICON_RR_NUM_5	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_6.bmp"	,DOG_ICON_RR_NUM_6	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_7.bmp"	,DOG_ICON_RR_NUM_7	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_8.bmp"	,DOG_ICON_RR_NUM_8	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+{"RR_NUM_9.bmp"	,DOG_ICON_RR_NUM_9	,32	,56	,ICON_LEFT_X_POS+10	,ICON_LEFT_Y_POS+20	,RGB888_TO_RGB565(0xc0c0c0)	,NULL	,0	},
+};
+
+UINT16 * gp_get_dog_dispInfo(void)
+{
+    dispGetResolution(hDisp, &lcd_size);	
+     gp_dogDispBuf= (UINT16*)dispGetFramebuffer(hDisp);
+     return (UINT16 *)gp_dogDispBuf;
+}
+static UINT16 *gp_clear_disp_buf(void)
+{
+    //get display buf info
+    UINT16* addr1;
+    addr1 = gp_get_dog_dispInfo();
+    #if 1
+    for (int y = 0; y <lcd_size.height; y++) {		
+    	for (int x = 0; x < lcd_size.width; x++) {			
+    		*addr1++ = TRANSPARENT_COLOR;		
+    	}	
+    }
+    #else
+    memset(addr1,TRANSPARENT_COLOR,lcd_size.height*lcd_size.width);
+    #endif
+    return addr1;
+}
+static SINT32 gp_Icon_draw_Index(UINT8 index)
+{
+    int x=0,y=0,icon_width=0,icon_height=0;
+    UINT16 tran_color=0,background_color=0;
+    iconManager_t *pIconItem=&Icon_Manager_CloudDog[index];
+    void *destbuf = gp_dogDispBuf;
+    x =      pIconItem->x_pos*HDMIxNum;
+    y =      pIconItem->y_pos*HDMIxNum;
+    icon_width =  pIconItem->icon_width;
+    icon_height = pIconItem->icon_height;
+    tran_color =  pIconItem->tran_color;
+    background_color = TRANSPARENT_COLOR;
+    
+//////////////////////////////////////////////////////////////////////////
+    UINT16 i;
+	SINT32 fd;
+	UINT32 file_size;
+	UINT32  * addr=NULL;
+	char *fileType=NULL;
+	static char icon_file_path[256];
+	if(NULL == destbuf)
+	{
+	    __err("Not Display Buff index:%d\n",index);
+	    return -1;
+	}
+    //open index Bin
+	if(index < DOG_ICON_NUM_MAX)
+	{
+		if(pIconItem->addr == NULL)
+		{
+    		strcpy(icon_file_path, ICON_PATH_DOG);
+    		strcat(icon_file_path, pIconItem->icon_name);	
+            fileType = &icon_file_path[strlen(icon_file_path)-4];
+    		if(0==strcmp(fileType,".bmp"))
+    		{
+    		    addr = (UINT32  *)openBmpFile(icon_file_path);
+    		    if(NULL != addr)
+    		    {
+    		       BITMAPINFOHEADER *fileHead = (BITMAPINFOHEADER *)getBimpFileHeadInfo();
+                   pIconItem->icon_width      = fileHead->biWidth;
+                   pIconItem->icon_height     = fileHead->biHeight;
+    		    }
+                pIconItem->addr = addr;
+    		}
+    		else if(0==strcmp(fileType,".bin"))
+    		{
+                fd = open(icon_file_path,O_RDONLY);
+        		if(fd >=0)
+        		{
+        			file_size = lseek(fd,0,SEEK_END);
+        			lseek(fd,0,SEEK_SET);
+        			addr = (UINT32 *)malloc(file_size);	
+        			read(fd,addr,file_size);
+        			close(fd);	
+        			pIconItem->addr = addr;
+        		}
+    		}
+
+		}
+		else 
+		{
+            addr = pIconItem->addr;
+		}
+	}	
+
+    if(addr != NULL)
+	{
+	    __inf("open file %s  :0x%X  DispAddr:0x%X  ICON index = %d X=%d,Y=%d LcdW:%d LcdH:%d\n", \
+	        icon_file_path,addr,destbuf,index,x,y,lcd_size.width,lcd_size.height);
+  
+        gp_block_cpy(destbuf,x,y,lcd_size.width, lcd_size.height,addr,icon_width,icon_height,tran_color,background_color);
+		return 0;
+	}
+	return -1;
+}
+static void gp_dog_icon_commInfo(void)
+{
+    int battayLeve=dv_set.battery_state;
+    if(battayLeve > 3)
+        battayLeve = 3;
+    gp_Icon_draw_Index(battayLeve);
+}
+static void gp_dog_icon_GpsInfo(PGPS_INFO arg)
+{
+    
+    PGPS_INFO gpsInfo = arg;
+    int gsm_level=0;
+    //Gps status
+    if('A'==gpsInfo->gpsStatus)
+         gp_Icon_draw_Index(DOG_ICON_R_GPS_ON);
+    else gp_Icon_draw_Index(DOG_ICON_R_GPS_OFF);
+    //GSM Signal
+    gsm_level=gpsInfo->gsmSignal*(5-1)/31 + 1;
+    if(gsm_level>4)
+        gsm_level = 4;
+    gp_Icon_draw_Index(DOG_ICON_R_SIGNAL_0+gsm_level);
+
+}
+
+static SINT32 gp_disp_dog_Icon(void)
+{   
+    const void *currPackData = packData;// Read Only- pointer
+    UINT32 icon_index = ICON_INT;
+
+    if(NULL==currPackData)
+    {
+        __err("not CloudDog Pack Data\n");
+        return -1;
+    }    
+    gp_get_dog_dispInfo();
+    gp_dog_icon_commInfo();
+
+    //resolve data pack
+    START_PACKET *startPack= (START_PACKET *)currPackData;
+    switch (startPack->type) {
+        case TYPE_SECURITY_BOOT:
+            putDataStruct(currPackData,startPack->type);
+            break;
+        case TYPE_GPS_INFO:
+            gp_dog_icon_GpsInfo((PGPS_INFO)currPackData);
+            break;
+        default:
+            break;
+        }
+    dispFlip(hDisp);
+}
+
+void *CloudDog_Thread(void *arg)
+{
+    DATA_TYPES type;
+    dv_set.extended_app = EXTAPP_NULL;//EXTAPP_CLOUD_DOG;
+    while(DISABLE==dv_set.ui_show){
+        sleep(2); //500ms
+        __wrn("wait ui show\n");
+    };
+    while(1)
+    {
+        if(EXTAPP_NULL == dv_set.extended_app)
+        while(1);
+        packData = getDataStruct(cloudDogString[1],&type);
+        
+        gp_clear_disp_buf();
+        gp_disp_dog_Icon();
+
+
+       usleep(500000); //500ms
+    }
+
+}
+
+

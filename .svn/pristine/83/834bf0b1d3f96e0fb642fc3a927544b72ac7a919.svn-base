@@ -1,0 +1,1 @@
+--------------------------------------- platform/common/driver/gsensor-------------------------------------gsensors = {	{ name = "gsensor_kxtf9",	prompt = "gsensor_kxtf9" },	{ name = "gsensor_mxc6226",	prompt = "gsensor_mxc6226" },	{ name = "gsensor_mxc6225XU",	prompt = "gsensor_mxc6225XU" },}

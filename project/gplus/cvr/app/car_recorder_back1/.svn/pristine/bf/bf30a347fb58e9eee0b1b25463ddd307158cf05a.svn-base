@@ -1,0 +1,404 @@
+//ReadBitMap
+//
+#include <string.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <malloc.h>
+#include "CloudDog.h"
+
+static    BITMAPFILEHEADER   bitHead;
+static    BITMAPINFOHEADER bitInfoHead;
+static    FILE *pfile;
+UINT32 *getBimpFileHeadInfo(void){return &bitInfoHead;}
+
+void showBmpHead(BITMAPFILEHEADER *pBmpHead)
+{
+    printf("Bmp Head:\n");
+    printf("File Size:%d\n", pBmpHead->bfSize);
+    printf("reserve:%d\n", pBmpHead->bfReserved1);
+    printf("reserve:%d\n", pBmpHead->bfReserved2);
+    printf("bfOffBits:%d\n", pBmpHead->bfOffBits);
+}
+
+
+void showBmpInforHead(BITMAPINFOHEADER *pBmpInforHead)
+{
+    printf("Bmp Infor Head:\n");
+    printf("struct biSize:%d\n", pBmpInforHead->biSize);
+    printf("biWidth:%d\n", pBmpInforHead->biWidth);
+    printf("biHeight:%d\n", pBmpInforHead->biHeight);
+    printf("biPlanes:%d\n", pBmpInforHead->biPlanes);
+    printf("biBitCount:%d\n", pBmpInforHead->biBitCount);
+    printf("biCompression:%d\n", pBmpInforHead->biCompression);
+    printf("biSizeImage:%d\n", pBmpInforHead->biSizeImage);
+    printf("biXPelsPerMeter:%d\n", pBmpInforHead->biXPelsPerMeter);
+    printf("biYPelsPerMeter:%d\n", pBmpInforHead->biYPelsPerMeter);
+    printf("biClrUsed:%d\n", pBmpInforHead->biClrUsed);
+    printf("biClrImportant:%d\n", pBmpInforHead->biClrImportant);
+}
+
+void *showRgbQuan(RGBQUAD *pRGB)
+{
+    printf("(%-3d,%-3d,%-3d)   ", pRGB->rgbRed, pRGB->rgbGreen, pRGB->rgbBlue);
+    return NULL;
+}
+static RGBQUAD *loadPaletteInfo(void)
+{
+    RGBQUAD *pRgb;
+    INT32 nPlantNum = (INT32)(pow(2, (double)(bitInfoHead.biBitCount)));   //   Mix color Plant Number;
+    pRgb = (RGBQUAD *)malloc(nPlantNum * sizeof(RGBQUAD));
+    memset(pRgb, 0, nPlantNum * sizeof(RGBQUAD));
+    int num = fread(pRgb, 4, nPlantNum, pfile);
+
+    printf("Color Plate Number: %d\n", nPlantNum);
+#if 0
+    printf("Palette Info:\n");
+    int i;
+    for (i = 0; i < nPlantNum; i++)
+    {
+        if (i % 5 == 0)
+        {
+            printf("\n");
+        }
+        showRgbQuan(&pRgb[i]);
+
+    }
+
+    printf("\n");
+#endif
+    return pRgb;
+}
+
+static void load1BitSubroutine(LOAD_BMPBIT_STR *bmpInfo)
+{
+    int k;
+    int index = 0;
+    int i, j;
+    int width = bmpInfo->width;
+    int height= bmpInfo->height;
+    int l_width = bmpInfo->dataSize;
+    UINT8 *pColorData = bmpInfo->pColorData;
+    RGBQUAD *dataOfBmp = bmpInfo->dataOfBmp;
+    RGBQUAD *pRgb = bmpInfo->pRgb; 
+    for(i = 0; i < height; i++)
+        for(j = 0; j < width; j++)
+        {
+            UINT8 mixIndex = 0;
+            k = i * l_width + j / 8; //k:取得该像素颜色数据在实际数据数组中的序号
+            //j:提取当前像素的颜色的具体值
+            mixIndex = pColorData[k];
+            switch(j % 8)
+            {
+            case 0:
+                mixIndex = mixIndex << 7;
+                mixIndex = mixIndex >> 7;
+                break;
+            case 1:
+                mixIndex = mixIndex << 6;
+                mixIndex = mixIndex >> 7;
+                break;
+            case 2:
+                mixIndex = mixIndex << 5;
+                mixIndex = mixIndex >> 7;
+                break;
+
+            case 3:
+                mixIndex = mixIndex << 4;
+                mixIndex = mixIndex >> 7;
+                break;
+            case 4:
+                mixIndex = mixIndex << 3;
+                mixIndex = mixIndex >> 7;
+                break;
+
+            case 5:
+                mixIndex = mixIndex << 2;
+                mixIndex = mixIndex >> 7;
+                break;
+            case 6:
+                mixIndex = mixIndex << 1;
+                mixIndex = mixIndex >> 7;
+                break;
+
+            case 7:
+                mixIndex = mixIndex >> 7;
+                break;
+            }
+
+            dataOfBmp[index].rgbRed = pRgb[mixIndex].rgbRed;
+            dataOfBmp[index].rgbGreen = pRgb[mixIndex].rgbGreen;
+            dataOfBmp[index].rgbBlue = pRgb[mixIndex].rgbBlue;
+            dataOfBmp[index].rgbReserved = pRgb[mixIndex].rgbReserved;
+            index++;
+
+        }
+}
+static void load2BitSubroutine(LOAD_BMPBIT_STR *bmpInfo)
+{
+    int k;
+    int index = 0;
+    int i, j;
+    int width = bmpInfo->width;
+    int height= bmpInfo->height;
+    int l_width = bmpInfo->dataSize;
+    UINT8 *pColorData = bmpInfo->pColorData;
+    RGBQUAD *dataOfBmp = bmpInfo->dataOfBmp;
+    RGBQUAD *pRgb = bmpInfo->pRgb; 
+    for( i = 0; i < height; i++)
+        for( j = 0; j < width; j++)
+        {
+            UINT8 mixIndex = 0;
+            k = i * l_width + j / 4; //k:取得该像素颜色数据在实际数据数组中的序号
+            //j:提取当前像素的颜色的具体值
+            mixIndex = pColorData[k];
+            switch(j % 4)
+            {
+            case 0:
+                mixIndex = mixIndex << 6;
+                mixIndex = mixIndex >> 6;
+                break;
+            case 1:
+                mixIndex = mixIndex << 4;
+                mixIndex = mixIndex >> 6;
+                break;
+            case 2:
+                mixIndex = mixIndex << 2;
+                mixIndex = mixIndex >> 6;
+                break;
+            case 3:
+                mixIndex = mixIndex >> 6;
+                break;
+            }
+            //Save the pixel data to the corresponding position in the array
+            dataOfBmp[index].rgbRed = pRgb[mixIndex].rgbRed;
+            dataOfBmp[index].rgbGreen = pRgb[mixIndex].rgbGreen;
+            dataOfBmp[index].rgbBlue = pRgb[mixIndex].rgbBlue;
+            dataOfBmp[index].rgbReserved = pRgb[mixIndex].rgbReserved;
+            index++;
+
+
+        }
+}
+static void load4BitSubroutine(LOAD_BMPBIT_STR *bmpInfo)
+{
+    int k;
+    int index = 0;
+    int i, j;
+    int width = bmpInfo->width;
+    int height= bmpInfo->height;
+    int l_width = bmpInfo->dataSize;
+    UINT8 *pColorData = bmpInfo->pColorData;
+    RGBQUAD *dataOfBmp = bmpInfo->dataOfBmp;
+    RGBQUAD *pRgb = bmpInfo->pRgb;
+    for( i = 0; i < height; i++)
+        for( j = 0; j < width; j++)
+        {
+            UINT8 mixIndex = 0;
+            k = i * l_width + j / 2;
+            mixIndex = pColorData[k];
+            if(j % 2 == 0)
+            {
+                //low
+                mixIndex = mixIndex << 4;
+                mixIndex = mixIndex >> 4;
+            }
+            else
+            {
+                //high
+                mixIndex = mixIndex >> 4;
+            }
+
+            dataOfBmp[index].rgbRed = pRgb[mixIndex].rgbRed;
+            dataOfBmp[index].rgbGreen = pRgb[mixIndex].rgbGreen;
+            dataOfBmp[index].rgbBlue = pRgb[mixIndex].rgbBlue;
+            dataOfBmp[index].rgbReserved = pRgb[mixIndex].rgbReserved;
+            index++;
+
+        }
+}
+static void load8BitSubroutine(LOAD_BMPBIT_STR *bmpInfo)
+{
+    int k;
+    int index = 0;
+    int i, j;
+    int width = bmpInfo->width;
+    int height= bmpInfo->height;
+    int l_width = bmpInfo->dataSize;
+    UINT8 *pColorData = bmpInfo->pColorData;
+    RGBQUAD *dataOfBmp = bmpInfo->dataOfBmp;
+    RGBQUAD *pRgb = bmpInfo->pRgb;
+    for( i = 0; i < height; i++)
+        for( j = 0; j < width; j++)
+        {
+            UINT8 mixIndex = 0;
+            k = i * l_width + j;
+            mixIndex = pColorData[k];
+            dataOfBmp[index].rgbRed = pRgb[mixIndex].rgbRed;
+            dataOfBmp[index].rgbGreen = pRgb[mixIndex].rgbGreen;
+            dataOfBmp[index].rgbBlue = pRgb[mixIndex].rgbBlue;
+            dataOfBmp[index].rgbReserved = pRgb[mixIndex].rgbReserved;
+            index++;
+        }
+}
+static void load16BitSubroutine(LOAD_BMPBIT_STR *bmpInfo)
+{
+    int k;
+    int index = 0;
+    int i, j;
+    int width = bmpInfo->width;
+    int height= bmpInfo->height;
+    int l_width = bmpInfo->dataSize;
+    UINT8 *pColorData = bmpInfo->pColorData;
+    RGBQUAD *dataOfBmp = bmpInfo->dataOfBmp;
+    RGBQUAD *pRgb = bmpInfo->pRgb;
+    for( i = 0; i < height; i++)
+        for( j = 0; j < width; j++)
+        {
+            UINT16 mixIndex = 0;
+
+            k = i * l_width + j * 2;
+            UINT16 shortTemp;
+            shortTemp = pColorData[k + 1];
+            shortTemp = shortTemp << 8;
+
+            mixIndex = pColorData[k] + shortTemp;
+
+            dataOfBmp[index].rgbRed = pRgb[mixIndex].rgbRed;
+            dataOfBmp[index].rgbGreen = pRgb[mixIndex].rgbGreen;
+            dataOfBmp[index].rgbBlue = pRgb[mixIndex].rgbBlue;
+            dataOfBmp[index].rgbReserved = pRgb[mixIndex].rgbReserved;
+            index++;
+        }
+}
+// 
+static void *ConvertedDispbuf(LOAD_BMPBIT_STR *bmpInfo)
+{
+    int width = bmpInfo->width;
+    int height= bmpInfo->height;
+    RGBQUAD *dataOfBmp = bmpInfo->dataOfBmp;
+    int i=0,w=0,h=0,dispBufSize=width * height*sizeof(UINT16);
+    static UINT16 *dispBuf = NULL;
+    dispBuf = (UINT16 *)malloc(dispBufSize);
+    printf("dispBufAddress:0x%X\n",dispBuf);
+    memset(dispBuf,0,dispBufSize);
+        //lcd Displayed from the lower left corner
+    int bufIndex = width*height,offsetWidth=0;
+    for(h=1;h<=height;h++)
+    {
+        offsetWidth = h*width;
+        for(w=width; w>0; w--)
+        {
+            i++;
+            offsetWidth--;
+            *(dispBuf+offsetWidth) = RGB888_TO_RGB565(dataOfBmp[bufIndex-i].rgbRed<<16 | \
+                                       dataOfBmp[bufIndex-i].rgbGreen<<8 | \
+                                       dataOfBmp[bufIndex-i].rgbBlue);
+
+        #if 0
+        *(dispBuf+i) = RGB888_TO_RGB565(dataOfBmp[bufIndex-i].rgbRed<<16 | \
+                                    dataOfBmp[bufIndex-i].rgbGreen<<8 | \
+                                    dataOfBmp[bufIndex-i].rgbBlue);
+
+        if (i % 5 == 0)
+        {
+            printf("\n");
+        }
+        showRgbQuan(&dataOfBmp[i]);
+        #endif
+        }
+     }
+     return (void *)dispBuf;
+}
+void *openBmpFile(char *strFile)
+{
+    LOAD_BMPBIT_STR bmpInfo={0};
+    pfile = fopen(strFile, "rb"); 
+    if(pfile != NULL)
+    {
+        UINT16 fileType;
+        fread(&fileType, 1, sizeof(UINT16), pfile);
+        if(fileType != 0x4d42)
+        {
+            printf("file is not .bmp file!");
+            return;
+        }
+        fread(&bitHead, 1, sizeof(BITMAPFILEHEADER), pfile);
+
+        showBmpHead(&bitHead);
+
+        fread(&bitInfoHead, 1, sizeof(BITMAPINFOHEADER), pfile);
+        showBmpInforHead(&bitInfoHead);
+        printf("\n");
+    }
+    else
+    {
+        printf("file open fail!\n");
+        return;
+    }
+    if(bitInfoHead.biBitCount < 24)//Palette
+    {
+       bmpInfo.pRgb = loadPaletteInfo();
+    }
+
+
+    int width = bitInfoHead.biWidth;
+    int height = bitInfoHead.biHeight;
+    int l_width   = WIDTHUINT8S(width * bitInfoHead.biBitCount); //计算位图的实际宽度并确保它为32的倍数
+    UINT8    *pColorData = (UINT8 *)malloc(height * l_width);
+    memset(pColorData, 0, height * l_width);
+    INT32 nData = height * l_width;
+    fread(pColorData, 1, nData, pfile);
+    fclose(pfile);
+    //The bit map data into RGB data
+    RGBQUAD *dataOfBmp;
+    dataOfBmp = (RGBQUAD *)malloc(width * height * sizeof(RGBQUAD)); //用于保存各像素对应的RGB数据
+    memset(dataOfBmp, 0, width * height * sizeof(RGBQUAD));
+    printf("bmp to rgb\n");
+    bmpInfo.width = width;
+    bmpInfo.height = height;
+    bmpInfo.dataSize = l_width;
+    bmpInfo.pColorData = pColorData;
+    bmpInfo.dataOfBmp = dataOfBmp;
+    
+    if(bitInfoHead.biBitCount < 24) //有调色板，即位图为非真彩色
+    {
+        if (bitInfoHead.biBitCount == 1)
+            load1BitSubroutine(&bmpInfo);
+        if(bitInfoHead.biBitCount == 2)
+            load2BitSubroutine(&bmpInfo);
+        if(bitInfoHead.biBitCount == 4)
+            load4BitSubroutine(&bmpInfo);
+        if(bitInfoHead.biBitCount == 8)
+            load8BitSubroutine(&bmpInfo);
+        if(bitInfoHead.biBitCount == 16)
+            load16BitSubroutine(&bmpInfo);
+    }
+    else//The picture shows the 24 -bit True Color
+    {
+        int k;
+        int index = 0;
+        int i, j;
+        for( i = 0; i < height; i++)
+            for( j = 0; j < width; j++)
+            {
+                k = i * l_width + j * 3;
+                dataOfBmp[index].rgbRed = pColorData[k + 2];
+                dataOfBmp[index].rgbGreen = pColorData[k + 1];
+                dataOfBmp[index].rgbBlue = pColorData[k];
+                index++;
+            }
+    }
+    void *returnBuf=NULL;
+    returnBuf = ConvertedDispbuf(&bmpInfo);
+
+    if (bitInfoHead.biBitCount < 24)
+    {
+        free(bmpInfo.pRgb);
+    }
+    free(dataOfBmp);
+    free(pColorData);
+    printf("return returnBuf:0x%X\n",returnBuf);
+    return returnBuf;
+}
+

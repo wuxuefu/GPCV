@@ -1,0 +1,195 @@
+
+-------------------------------------
+-- Chip ARCH and MACH
+-------------------------------------
+if config.ARCH == nil then
+	config.ARCH = selectList(
+		"CHIP ARCH",
+		{"SPMP8050", "GPL32900", "GPL32900B"})
+end
+
+config["ARCH_" .. config.ARCH] = true
+
+if config.DEFCONFIG_FILE == nil then
+	config.DEFCONFIG_FILE = ""
+end
+
+-------------------------------------
+-- Tool Chain select
+-------------------------------------
+if config.TOOLCHAIN_SEL == nil then
+	config.TOOLCHAIN_SEL = selectList("Select Tool Chain",
+		{"glibc", "musl" },
+		{"glibc", "musl" })
+end
+
+-------------------------------------
+-- BusyBox select
+-------------------------------------
+if config.TOOLCHAIN_SEL == "glibc" then
+	if config.LITE_BUSYBOX == nil then
+		config.LITE_BUSYBOX = selectBool("Using lite busybox", "Use lite busybox")
+	end
+end
+
+-------------------------------------
+-- Memory
+-------------------------------------
+local MB = 1024 * 1024
+if config.MEM_SIZE == nil then
+	config.MEM_SIZE = selectList("Memory Size",
+		 {"32MB", "64MB", "128MB"},
+		 {(32 * MB), (64 * MB), (128 * MB)})
+end
+
+if config.CHUNKMEM_SIZE == nil then
+	config.CHUNKMEM_SIZE = selectList("Chunk Memory Size",
+		 {"2MB", "4MB", "8MB", "16MB", "24MB", "32MB", "48MB", "64MB", "96MB"},
+		 {(2 * MB), (4 * MB), (8 * MB), (16 * MB), (24 * MB), (32 * MB), (48 * MB), (64 * MB), (96 * MB)})
+end
+
+local kernelmem = config.MEM_SIZE - config.CHUNKMEM_SIZE
+config.KERNEL_CMDLINE =
+	string.format("mem=%dMB gp_chunkmem.membase=0x%08x gp_chunkmem.memsize=0x%08x",
+		kernelmem / MB, kernelmem, config.CHUNKMEM_SIZE
+	)
+	
+-------------------------------------
+-- Platform
+-------------------------------------
+IncludeConfig("platform/mkconfig")
+IncludeConfig("platform/common/mkconfig/" .. config.ARCH .. "/mkconfig" )
+
+-------------------------------------
+-- Show Logo
+-------------------------------------
+if config.SHOWLOGO == nil then
+	config.SHOWLOGO = selectBool("Show Logo Config", "Enable Show Logo")
+end
+
+-------------------------------------
+-- Audio Mixer
+-------------------------------------
+if config.AUDIO then
+	if config.AUDIOMIXER == nil then
+		config.AUDIOMIXER = selectBool("Audio Mixer Config", "Enable Audio Mixer")
+	end
+end
+
+-------------------------------------
+-- Resample
+-------------------------------------
+if config.RESAMPLE == nil then
+	if config.AUDIOMIXER then
+		config.RESAMPLE = true
+	else
+		config.RESAMPLE = selectBool("Resample Config", "Enable Resample")
+	end
+end
+
+-------------------------------------
+-- Flash
+-------------------------------------
+if config.FLASH == nil then
+	config.FLASH = selectBool("FlashLite Config", "Enable FlashLite")
+end
+if config.FLASH then 
+-- flashplayer support mouse? 
+       if config.FLASH_SUPPORT_MOUSE == nil then 
+               config.FLASH_SUPPORT_MOUSE = selectBool("Flashplayer support mouse", "Enable mouse support") 
+       end 
+-- flashplayer external interface support? 
+       if config.FLASH_EXTERNAL_INTERFACE == nil then 
+               config.FLASH_EXTERNAL_INTERFACE = selectBool("Flashplayer external interface", "Enable external interface") 
+       end 
+       config.LIBZ = true;
+       config.FREETYPE2 = true;
+       config.OPENVG = true;
+end 
+-------------------------------------
+-- OpenVG
+-------------------------------------
+if config.OPENVG == nil then
+	config.OPENVG = selectBool("OpenVG Config", "Enable OpenVG")
+end
+
+-------------------------------------
+-- DSP Codec
+-------------------------------------
+if config.ARCH ~= "GPL32900B" then
+if config.CODEC_IMAGE == nil then
+	config.CODEC_IMAGE = selectBool("DSP Codec Config", "Enable DSP Image Codec")
+end
+if config.CODEC_VIDEO == nil then
+	config.CODEC_VIDEO = selectBool("DSP Codec Config", "Enable DSP Video Codec")
+end
+end
+-------------------------------------
+-- Lib Fuse
+-------------------------------------
+if config.LIBFUSE == nil then
+	config.LIBFUSE = selectBool("Lib Fuse Config", "Enable Lib Fuse")
+end
+
+-------------------------------------
+-- ExFAT on Fuse
+-------------------------------------
+if config.EXFAT == nil then
+	config.EXFAT = selectBool("ExFAT on Fuse Config", "Enable ExFAT on FUse")
+end
+
+-------------------------------------
+-- Lua
+-------------------------------------
+if config.LUA == nil then
+	config.LUA = selectBool("LUA Config", "Enable LUA")
+end
+
+-------------------------------------
+-- PPU SELECT
+-------------------------------------
+if config.PPU == nil then
+	config.PPU = selectList("Select PPU Function",
+		 {"Disable", "PPU", "Simple PPU"},
+		 {(0), (1), (2)})
+end
+
+-------------------------------------
+-- PPU TV
+-------------------------------------
+if config.PPU_TV == nil then
+	config.PPU_TV = selectBool("PPU_TV Config", "Enable PPU_TV")
+end
+
+-------------------------------------
+-- GP AUDIO LIBRARY
+-------------------------------------
+if config.LIB_AUDIO == nil then
+	config.LIB_AUDIO = selectBool("GP AUDIO LIBRARY", "Enable AUDIO LIBRARY")
+end
+
+-------------------------------------
+-- GP MEDIA PLAYER LIBRARY
+-------------------------------------
+if config.LIB_MCP == nil then
+	config.LIB_MCP = selectBool("GP MEDIA PLAYER LIBRARY", "Enable MEDIA PLAYER LIBRARY")
+end
+
+-------------------------------------
+-- GP VIDEO DECODER LIBRARY
+-------------------------------------
+if config.LIB_VIDDEC == nil then
+	config.LIB_VIDDEC = selectBool("GP VIDEO DECODER LIBRARY", "Enable VIDEO DECODER LIBRARY")
+end
+
+-------------------------------------
+-- GP VIDEO STREAM ENCODE LIBRARY
+-------------------------------------
+if config.LIB_VIDSTREAM == nil then
+	config.LIB_VIDSTREAM = selectBool("GP VIDEO STREAM ENCODE LIBRARY", "Enable VIDEO STREAM ENOCDE LIBRARY")
+end
+
+-------------------------------------
+-- External
+-------------------------------------
+IncludeConfig("sdk/external/mkconfig")

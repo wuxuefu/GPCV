@@ -1,0 +1,11 @@
+<root>
+	<game_ui>
+		<ui_frame y="-16" width="312" height="98" />
+		<volume_bar x="21" y="61" width="271" height="6" />
+		<quit_botton x="27" y="20" width="26" height="26" />
+		<play_botton x="105" y="20" width="26" height="26" />
+		<load_botton x="184" y="20" width="26" height="26" />
+		<save_botton x="262" y="20" width="26" height="26" />
+		<low_power width="146" height="66" />
+	</game_ui>
+</root>

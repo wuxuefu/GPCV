@@ -1,0 +1,241 @@
+#ifndef _MKCONFIG_
+#define _MKCONFIG_
+
+#define SYSCONFIG_ARCH "GPL32900B"
+
+#define SYSCONFIG_ARCH_GPL32900B
+
+#define SYSCONFIG_AUDIO
+
+/* #undef SYSCONFIG_AUDIOFILE */
+
+/* #undef SYSCONFIG_AUDIOMIXER */
+
+/* #undef SYSCONFIG_A_SENSOR */
+
+#define SYSCONFIG_A_SENSOR_DEVICE "None"
+
+/* #undef SYSCONFIG_BTPLAY */
+
+/* #undef SYSCONFIG_CEVA */
+
+/* #undef SYSCONFIG_CF */
+
+#define SYSCONFIG_CHUNKMEM_SIZE 100663296
+
+/* #undef SYSCONFIG_CODEC_IMAGE */
+
+/* #undef SYSCONFIG_CODEC_VIDEO */
+
+/* #undef SYSCONFIG_CSI0 */
+
+/* #undef SYSCONFIG_CSI1 */
+
+#define SYSCONFIG_CSI2
+
+/* #undef SYSCONFIG_DC2DC */
+
+#define SYSCONFIG_DEFCONFIG_FILE "gpl32900b_cvr_defconfig"
+
+#define SYSCONFIG_DISP0
+
+/* #undef SYSCONFIG_DISP0_FB */
+
+#define SYSCONFIG_DISP0_HDMI
+
+#define SYSCONFIG_DISP0_PANEL "panel_lcd_ILI8961_27"
+
+/* #undef SYSCONFIG_DISP0_TVOUT */
+
+/* #undef SYSCONFIG_DISP1 */
+
+/* #undef SYSCONFIG_DISP1_FB */
+
+#define SYSCONFIG_DISP1_PANEL "None"
+
+#define SYSCONFIG_DISP2
+
+/* #undef SYSCONFIG_DISP2_FB */
+
+/* #undef SYSCONFIG_EMMC_NAND */
+
+/* #undef SYSCONFIG_ESOUND */
+
+/* #undef SYSCONFIG_EXFAT */
+
+/* #undef SYSCONFIG_EXPAT */
+
+/* #undef SYSCONFIG_FLASH */
+
+/* #undef SYSCONFIG_FREETYPE2 */
+
+/* #undef SYSCONFIG_GP_FAST_BOOT */
+
+/* #undef SYSCONFIG_GRAPHIC_2D */
+
+/* #undef SYSCONFIG_G_SENSOR */
+
+#define SYSCONFIG_G_SENSOR_DEVICE "None"
+
+#define SYSCONFIG_HOST "linux-x86"
+
+#define SYSCONFIG_INTERNAL_ADC
+
+#define SYSCONFIG_INTERNAL_RTC
+
+/* #undef SYSCONFIG_JPEG */
+
+#define SYSCONFIG_KERNEL_CMDLINE "mem=32MB gp_chunkmem.membase=0x02000000 gp_chunkmem.memsize=0x06000000"
+
+#define SYSCONFIG_KEY
+
+/* #undef SYSCONFIG_KEYBOARD */
+
+#define SYSCONFIG_KEYBOARD_DEVICE "None"
+
+/* #undef SYSCONFIG_LIBFUSE */
+
+/* #undef SYSCONFIG_LIBID3TAG */
+
+/* #undef SYSCONFIG_LIBZ */
+
+/* #undef SYSCONFIG_LIB_AUDIO */
+
+/* #undef SYSCONFIG_LIB_FD */
+
+/* #undef SYSCONFIG_LIB_MCP */
+
+#define SYSCONFIG_LIB_VIDDEC
+
+#define SYSCONFIG_LIB_VIDSTREAM
+
+/* #undef SYSCONFIG_LUA */
+
+/* #undef SYSCONFIG_LZO */
+
+#define SYSCONFIG_MAINSTORAGE "RAM"
+
+#define SYSCONFIG_MAIN_FILESYSTEM "cramfs"
+
+#define SYSCONFIG_MEM_SIZE 134217728
+
+/* #undef SYSCONFIG_MICROWINDOWS */
+
+#define SYSCONFIG_MODULE_ALLIN_ROOTFS
+
+/* #undef SYSCONFIG_MS */
+
+/* #undef SYSCONFIG_NAND */
+
+#define SYSCONFIG_ON2
+
+/* #undef SYSCONFIG_OPENVG */
+
+#define SYSCONFIG_PLATFORM "gplus.cvr_turnkey_demo0"
+
+#define SYSCONFIG_PLATFORM_DIR "platform/gplus/cvr_turnkey_demo0"
+
+/* #undef SYSCONFIG_PNG */
+
+#define SYSCONFIG_PPU 0
+
+/* #undef SYSCONFIG_PPU_TV */
+
+#define SYSCONFIG_PRODUCT "gplus.cvr__gplus.cvr_turnkey_demo0"
+
+#define SYSCONFIG_PROJECT "gplus.cvr"
+
+#define SYSCONFIG_PROJECT_DIR "project/gplus/cvr"
+
+/* #undef SYSCONFIG_PS2MOUSE */
+
+#define SYSCONFIG_PS2MOUSE_DEVICE "None"
+
+/* #undef SYSCONFIG_PULSEAUDIO */
+
+/* #undef SYSCONFIG_QT */
+
+/* #undef SYSCONFIG_RESAMPLE */
+
+#define SYSCONFIG_RM_UBOOT
+
+#define SYSCONFIG_SD
+
+/* #undef SYSCONFIG_SDIO */
+
+/* #undef SYSCONFIG_SDL */
+
+/* #undef SYSCONFIG_SDL_GFX */
+
+/* #undef SYSCONFIG_SDL_IMAGE */
+
+/* #undef SYSCONFIG_SDL_TTF */
+
+#define SYSCONFIG_SENSOR0 "ar_0330_mipi"
+
+#define SYSCONFIG_SENSOR0_PORT_SEL "MIPI"
+
+#define SYSCONFIG_SENSOR1 "None"
+
+#define SYSCONFIG_SENSOR1_PORT_SEL "None"
+
+#define SYSCONFIG_SENSOR2 "None"
+
+#define SYSCONFIG_SENSOR2_PORT_SEL "None"
+
+#define SYSCONFIG_SENSOR_DRIVER_NUM 1
+
+#define SYSCONFIG_SFLASH
+
+/* #undef SYSCONFIG_SHOWLOGO */
+
+/* #undef SYSCONFIG_SIMULATOR */
+
+/* #undef SYSCONFIG_SPU */
+
+#define SYSCONFIG_TARGET "linux-arm"
+
+/* #undef SYSCONFIG_TIFF */
+
+#define SYSCONFIG_TOOLCHAIN_SEL "musl"
+
+#define SYSCONFIG_TOUCH
+
+/* #undef SYSCONFIG_TOUCHPAD */
+
+#define SYSCONFIG_TOUCHPAD_DEVICE "None"
+
+/* #undef SYSCONFIG_TOUCH_PANEL */
+
+#define SYSCONFIG_TOUCH_PANEL_DEVICE "None"
+
+/* #undef SYSCONFIG_TS */
+
+#define SYSCONFIG_USB
+
+#define SYSCONFIG_USB_HOST
+
+#define SYSCONFIG_USB_HOST_HIGHSPEED_MODE
+
+#define SYSCONFIG_USB_HOST_HUB_CONFIG 5
+
+#define SYSCONFIG_USB_HOST_STORAGE
+
+#define SYSCONFIG_USB_PHY0_EN 1
+
+#define SYSCONFIG_USB_PHY0_VOLTAGE_UP 1
+
+#define SYSCONFIG_USB_PHY1_SEL 1
+
+#define SYSCONFIG_USB_PHY1_VOLTAGE_UP 1
+
+#define SYSCONFIG_USB_SLAVE
+
+#define SYSCONFIG_USB_SLAVE_MSDC
+
+#define SYSCONFIG_USB_WIFI "None"
+
+/* #undef SYSCONFIG_XD */
+
+
+#endif

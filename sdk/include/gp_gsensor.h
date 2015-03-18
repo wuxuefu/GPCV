@@ -1,0 +1,10 @@
+#ifndef __GENSOR_H__
+#define __GENSOR_H__
+
+#define GSENSOR_IOCTL_ID	'G'
+#define GSENSOR_IOCTL_G_X	_IOR(GSENSOR_IOCTL_ID, 0x01, int)
+#define GSENSOR_IOCTL_G_Y	_IOR(GSENSOR_IOCTL_ID, 0x02, int)
+#define GSENSOR_IOCTL_G_STATE	_IOR(GSENSOR_IOCTL_ID, 0x03, int)
+#define GSENSOR_IOCTL_G_Z	_IOR(GSENSOR_IOCTL_ID, 0x03, int)
+
+#endif

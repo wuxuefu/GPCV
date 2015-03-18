@@ -1,0 +1,4 @@
+kernel//home/wu/GPCV2159/openplatform/platform/gplus/cvr_turnkey_demo0/board_config.ko
+kernel//home/wu/GPCV2159/openplatform/platform/gplus/cvr_turnkey_demo0/key_driver.ko
+kernel//home/wu/GPCV2159/openplatform/platform/gplus/cvr_turnkey_demo0/touch_driver.ko
+kernel//home/wu/GPCV2159/openplatform/platform/gplus/cvr_turnkey_demo0/gp_joystick_driver.ko

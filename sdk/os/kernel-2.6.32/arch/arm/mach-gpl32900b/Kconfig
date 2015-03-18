@@ -1,0 +1,43 @@
+if ARCH_GPL32900B
+
+menu "GPL32900B Options"
+
+config MACH_GPL32900B
+	bool "GPL32900B (Platform)"
+	select CPU_V6
+
+config SERIAL_GPL32900B
+	bool "GPL32900B serial port support"
+	depends on ARM && ARCH_GPL32900B
+	select SERIAL_CORE
+	help
+	  Select GPL32900B serial port function.
+
+config SERIAL_GPL32900B_CONSOLE
+	bool "Console on GPL32900B serial port"
+	depends on SERIAL_GPL32900B
+	select SERIAL_CORE_CONSOLE
+	help
+		Select serial port as console.
+
+config COMMON_CLK_DEBUG
+	bool "DebugFS representation of clock tree"
+	select DEBUG_FS
+	---help---
+	  Creates a directory hierchy in debugfs for visualizing the clk
+	  tree structure.  Each directory contains read-only members
+	  that export information specific to that clk node: clk_rate,
+	  clk_flags, clk_prepare_count, clk_enable_count &
+	  clk_notifier_count.
+
+config FPGA_TEST
+	bool "FPGA test selection"
+	depends on ARCH_GPL32900B
+	help
+	  Set for FPGA testing.
+
+config DEFCONFIG_GPL32900B
+	string "Kernel defconfig file"
+
+endmenu
+endif

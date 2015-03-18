@@ -1,0 +1,2 @@
+bmp.o: bmp.c CloudDog.h \
+ ../../../../../sdk/os/kernel-2.6.32/arch/arm/mach-gpl32900b/include/mach/typedef.h

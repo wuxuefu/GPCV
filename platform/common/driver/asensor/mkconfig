@@ -1,0 +1,1 @@
+--------------------------------------- platform/common/driver/gsensor-------------------------------------Asensors = {	{ name = "Asensor_DMARD07",	prompt = "Asensor_DMARD07" },	{ name = "Asensor_DA380",	prompt = "Asensor_DA380" },	{ name = "Asensor_DMARD07_Aerialcam",	prompt = "Asensor_DMARD07_Aerialcam" },	}

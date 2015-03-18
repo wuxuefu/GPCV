@@ -1,0 +1,165 @@
+﻿#!/bin/sh
+
+export PATH="$PATH:/system/sbin:/system/bin"
+export LD_LIBRARY_PATH="/lib:/usr/lib:/system/lib"
+
+echo "start"
+
+# mount points
+mkdir -p /media
+
+echo "mkdir"
+
+#sysInit core
+/sysinit core
+
+#ifup lo
+#ifconfig lo up 127.0.0.1
+
+# show logo
+#/showlogo &
+
+#enable panel backlight
+/sysinit backlight_enable
+
+# udev (mdev)
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+# mount main storage
+/sysinit main_storage
+
+# check if system exist
+if [ ! -d /system ]
+then
+	# mount system
+	mkdir -p /system
+	modprobe cramfs
+	#mount -t cramfs /dev/nanda1 /system
+fi
+	
+if [ -b /dev/nanda1 ] 
+then
+	mount -t cramfs /dev/nanda1 /system
+
+	mkdir -p /mnt/tmp
+
+	mount -o utf8 /dev/nanda2 /mnt/tmp
+	if [ $? -ne 0 ]; then
+		mkfs.vfat /dev/nanda2
+		mount -o utf8 /dev/nanda2 /mnt/tmp
+	fi
+
+	mkdir /media/nanda
+
+	mount -o utf8 /dev/nanda3 /media/nanda
+	if [ $? -ne 0 ]; then
+		mkfs.vfat /dev/nanda3
+		mount -o utf8 /dev/nanda3 /media/nanda
+	fi
+
+else
+	#wait sd card mout
+
+	if [ -d /media/sdcardb -a -f /media/sdcardb/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardb/system.bin /system
+	elif [ -d /media/sdcardb1 -a -f /media/sdcardb1/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardb1/system.bin /system
+	elif [ -d /media/sdcardb2 -a -f /media/sdcardb2/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardb2/system.bin /system
+	elif [ -d /media/sdcardb3 -a -f /media/sdcardb3/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardb3/system.bin /system
+	elif [ -d /media/sdcardb4 -a -f /media/sdcardb4/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardb4/system.bin /system
+	elif [ -d /media/sdcarda -a -f /media/sdcarda/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcarda/system.bin /system
+	elif [ -d /media/sdcarda1 -a -f /media/sdcarda1/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcarda1/system.bin /system
+	elif [ -d /media/sdcarda2 -a -f /media/sdcarda2/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcarda2/system.bin /system
+	elif [ -d /media/sdcarda3 -a -f /media/sdcarda3/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcarda3/system.bin /system
+	elif [ -d /media/sdcarda4 -a -f /media/sdcarda4/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcarda4/system.bin /system
+	elif [ -d /media/sdcardc -a -f /media/sdcardc/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardc/system.bin /system
+	elif [ -d /media/sdcardc1 -a -f /media/sdcardc1/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardc1/system.bin /system
+	elif [ -d /media/sdcardc2 -a -f /media/sdcardc2/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardc2/system.bin /system
+	elif [ -d /media/sdcardc3 -a -f /media/sdcardc3/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardc3/system.bin /system
+	elif [ -d /media/sdcardc4 -a -f /media/sdcardc4/system.bin ]; then
+		mount -t cramfs -o loop,utf8 /media/sdcardc4/system.bin /system
+	fi
+fi
+
+# sym link
+rm -rf /lib/modules
+if [ ! -d /system/lib/modules ]; then
+	arch=`cat /proc/cpuinfo | grep Hardware`
+	echo $arch      
+	if [ "$arch" = "Hardware	: GPL32900B" ]; then
+		ln -s /system/lib/modules_GPL32900B /lib/modules
+	else                                             
+		ln -s /system/lib/modules_GPL32900 /lib/modules
+	fi                                              
+else    
+	ln -s /system/lib/modules /lib
+fi
+ln -s /system/lib/image /lib
+
+# sysInit
+/sysinit
+
+#run falsh daemon server
+#cd /system/flash/xse/
+#./xse &
+#cd /
+#lua /sysinit.lua &
+
+#run pulseaudio
+if [ -f /system/bin/pulseaudio.sh ];then
+	echo pulseaudio
+	/system/bin/pulseaudio.sh
+fi
+
+# Run initgama load gamma data
+if [ -f /initgama ];then
+	echo Loading gamma table
+	/initgama
+fi
+
+#sync system time from RTC
+hwclock -s
+modprobe gp_usb
+#insmod /system/lib/modules/key_driver.ko
+
+chmod 777 /etc/chkdir.sh
+/media/sdcarda1/car_recorder &
+#/system/app/car_recorder &
+
+
+
+#insmod /lib/modules/gp_joystick_driver.ko
+
+#modprobe usbhid &
+#modprobe hid-logitech &
+
+# before connect to network, modify /project/common/wifi/system/wpa_supplicant_linux.conf
+
+#=====enable this if use wifi dongle
+
+#/system/wpa_set.sh
+
+#=====
+
+#=====enable this if use ethernet 
+
+#insmod /system/lib/modules/2.6.32.94/kernel/drivers/net/mii.ko
+#insmod /system/lib/modules/2.6.32.94/kernel/arch/arm/mach-gpl32900b/ethernet/gp_eth_module.ko
+#ifconfig eth0 up
+#sleep 2
+#udhcpc -i eth0 -s /etc/udhcp/default.script
+
+#=====

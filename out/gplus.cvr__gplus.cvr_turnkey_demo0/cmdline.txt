@@ -1,0 +1,1 @@
+console=ttyS0,115200 lpj=3776512 mem=32MB gp_chunkmem.membase=0x02000000 gp_chunkmem.memsize=0x06000000

@@ -1,0 +1,580 @@
+#ifndef CARDV_CLOUDDOG_H
+#define CARDV_CLOUDDOG_H
+
+
+
+#define ENUM_DUMMY4WORD(name)   E_##name = 0x10000000
+#define ICON_PATH_DOG "/system/resource/dog_icon/"
+
+        
+#define TRANSPARENT_COLOR_DOG_24x24      0xc618  
+#define TRANSPARENT_COLOR_DOG_32x56      0xbdf7
+#define TRANSPARENT_COLOR_DOG_32x32      TRANSPARENT_COLOR_DOG_24x24
+#define TRANSPARENT_COLOR_DOG_48x64      TRANSPARENT_COLOR_DOG_24x24
+#define TRANSPARENT_COLOR_DOG_72x88      TRANSPARENT_COLOR_DOG_32x56
+#define TRANSPARENT_COLOR_DOG_80x96      TRANSPARENT_COLOR_DOG_32x56
+#define TRANSPARENT_COLOR_DOG_96x120     0xbefe
+
+
+#ifndef NULL
+#define NULL (void *)0
+#endif
+
+#if defined(__arm )
+
+#define _ALIGNED(x) __align(x)
+#define _PACKED_BEGIN __packed
+#define _PACKED_END
+#define _INLINE static __inline
+#define _ASM_NOP __asm{nop;}
+#define _SECTION(sec)
+#define _CALLBACK()
+#define _CALLBACK_SECTION(sec)
+#define _MIPS_TODO 1
+#define _DRV650_TODO 0
+#define _STOPTRACE
+#elif defined( __WIN32__)
+#define _PACKED_BEGIN
+#define _PACKED_END
+#elif defined( __GNUC__)
+
+#define _ALIGNED(x) __attribute__((aligned(x)))
+#define _PACKED_BEGIN
+#define _PACKED_END __attribute__ ((packed)) 
+#define _INLINE static inline
+#define _ASM_NOP __asm__("nop");
+#define _SECTION(sec)          __attribute__ ((section (sec)))
+#define _CALLBACK()            __attribute__ ((weak))
+#define _CALLBACK_SECTION(sec) __attribute__ ((weak, section(sec)))
+#define _MIPS_TODO 0
+#define _DRV650_TODO 0
+#define _STOPTRACE __attribute__((__no_instrument_function__))
+#endif
+
+#define __SYSTEM_32_BIT__ 1
+#define __SYSTEM_64_BIT__ 2
+#define __SYSTEM_USER_BIT__ 3
+#define __SYSTEM_DATA_TYPEDEF__ __SYSTEM_USER_BIT__
+
+#if (__SYSTEM_DATA_TYPEDEF__ == __SYSTEM_32_BIT__)
+typedef unsigned long long  UINT64;     ///< Unsigned 64 bits data type
+typedef signed long long    INT64;      ///< Signed 64 bits data type
+typedef unsigned int       UINT32;     ///< Unsigned 32 bits data type
+typedef signed int         INT32;      ///< Signed 32 bits data type
+typedef unsigned short      UINT16;     ///< Unsigned 16 bits data type
+typedef signed short        INT16;      ///< Signed 16 bits data type
+typedef unsigned char       UINT8;      ///< Unsigned 8 bits data type
+typedef signed char         INT8;       ///< Signed 8 bits data type
+typedef float               FLOAT;      ///< Floating point integer
+typedef unsigned int        UBITFIELD;  ///< Unsigned bit field
+typedef signed int          BITFIELD;   ///< Signed bit field
+typedef UINT32              BOOL;
+#elif(__SYSTEM_DATA_TYPEDEF__ == __SYSTEM_64_BIT__)
+typedef unsigned  long  UINT64;     ///< Unsigned 64 bits data type
+typedef signed  long    INT64;      ///< Signed 64 bits data type
+typedef unsigned int       UINT32;     ///< Unsigned 32 bits data type
+typedef signed int         INT32;      ///< Signed 32 bits data type
+typedef unsigned short      UINT16;     ///< Unsigned 16 bits data type
+typedef signed short        INT16;      ///< Signed 16 bits data type
+typedef unsigned char       UINT8;      ///< Unsigned 8 bits data type
+typedef signed char         INT8;       ///< Signed 8 bits data type
+typedef float               FLOAT;      ///< Floating point integer
+typedef unsigned int        UBITFIELD;  ///< Unsigned bit field
+typedef signed int          BITFIELD;   ///< Signed bit field
+typedef UINT32              BOOL;
+#else
+#include "mach/typedef.h"
+typedef UINT32              BOOL;
+typedef SINT32              INT32;
+typedef SINT16              INT16;
+#endif
+
+#ifndef ENABLE
+#define ENABLE 		1
+#endif
+#ifndef DISABLE
+#define DISABLE		0
+#endif
+
+
+typedef enum
+{
+    TYPE_SECURITY_BOOT=0x20,//°²·À¿ª»ú
+    TYPE_GPS_INFO = 0x10,//GPS ÐÅÏ¢
+    TYPE_FIXED_ALARM = 0x11,//¹Ì¶¨±¨¾¯ÐÅÏ¢
+    TYPE_RADAR_ALARM = 0x12,//À×´ï±¨¾¯ÐÅÏ¢
+    TYPE_MENU_INFO = 0x13,//¹¦ÄÜ²Ëµ¥ÐÅÏ¢»ñÈ¡
+    TYPE_WEATHER = 0x18,//ÌìÆøÔ¤±¨
+    TYPE_COMPLAIN = 0x19,//Í¶Ëß¼üÐ­Òé
+    ENUM_DUMMY4WORD(DATA_TYPES),
+}DATA_TYPES;
+typedef enum
+{
+    ALARM_RED_CAMERA_02 = 2,//´³ºìµÆÅÄÕÕ
+    ALARM_RED_NO_CAMERA_03 = 3,//´³ºìµÆÎÞÅÄÕÕ
+    ALARM_FIXED_SPEED_12  = 12,//¹Ì¶¨²âËÙ
+    ALARM_INTERVAL_VELOCITY_20 = 20,//Çø¼ä²âËÙ
+    ALARM_INTERVAL_VELOCITY_STARTING_21=21,//Çø¼ä²âËÙÆðµã
+    ALARM_INTERVAL_VELOCITY_END_22 = 22,//Çø¼ä²âËÙÖÕµã
+    ALARM_FLOW_VELOCITY_24 = 24,//Á÷¶¯²âËÙ
+    ALARM_TEMPORARY_PARKING_BAN_70 = 70,//½ûÖ¹ÁÙÊ±Í£³µ
+    ALARM_PROHIBITING_OFF_HEAD_71 = 71,//½ûÖ¹µôÍ·
+    ALARM_PROHIBITED_LEFT_TURN_72 = 72,//½ûÖ¹×ó×ª
+    ALARM_PROHIBITED_RIGHT_TURN_73 = 73,//½ûÖ¹ÓÒ×
+    ALARM_ELECTRONIC_MONITORING_81 = 81,//µç×Ó¼à¿Ø
+    ALARM_CAR_TRAFFIC_MONITORING_82 = 82,//Æû³µÁ÷Á¿¼à¿Ø
+    ALARM_DRIVING_BEHAVIOR_83 = 83,//¼ÝÊ»ÐÐÎª
+    ALARM_VIOLATION_84 = 84,//Ñ¹ÊµÏß,Î¥¹æ±äµÀ
+    ALARM_BUS_LANES_85 = 85,//¹«½»³µ×¨ÓÃ³µµÀ
+    ALARM_OCCUPANCY_SHUNT_86 = 86,//Õ¼ÓÃ·ÖÁ÷µÀ
+    ALARM_UNIDIRECTIONAL_RETROGRADE_87 = 87,//µ¥ÏòÄæÐÐ
+    ALARM_PROHIBITED_LINKS_88 = 88,//½ûÐÐÂ·¶Î
+    ALARM_ILLEGAL_PARKING_89 = 89,//Î¥ÕÂÍ£³µ
+    ALARM_SCHOOL_SECTIONS_90 = 90,//Ñ§Ð£Â·¶Î
+    ALARM_SNOW_ROAD_SECTIONS_91 = 91,//±ùÑ©Â·¶Î
+    ALARM_MOUNTAIN_ROAD_SECTIONS_91 = 92,//É½µØÂ·¶Î
+    ALARM_ACCIDENT_MULTIPLE_93 = 93,//ÊÂ¹Ê¶à·¢Â·¶Î
+    ALARM_ANXIOUS_TURN_94 = 94,//¼±×ªÍä
+    ALARM_CONTINUOUS_CURVE_95 = 95,//Á¬ÐøÍäµÀ
+    ALARM_ANXIOUS_DOWNHILL_96 = 96,//¼±ÏÂÆÂ
+    ALARM_ROCKFALL_97 = 97,//ÂäÊ¯
+    ALARM_FOGGY_98 = 98,//¶àÎí
+    ALARM_MILITARY_CONTROL_99 = 99,//¾üÊÂ¹ÜÖÆ
+    ALARM_GAS_STATION_101 = 101,//¼ÓÓÍÕ¾
+    ALARM_SERVICE_AREA_102 = 102,//·þÎñÇ
+    ALARM_DAY_ROAD_LIGHTS_103 = 103,//È«Ììºò¿ªÍ·µÆÂ·¶Î
+    ALARM_FEE_STATION_108 = 108,//ÊÕ·ÑÕ¾
+    ALARM_TUNNEL_110 = 110,//ËíµÀ
+    ENUM_DUMMY4WORD(ALARM_TYPE_TABLE),
+}ALARM_TYPE_TABLE;
+typedef enum
+{
+    DOG_ICON_BACKGROUND=0,
+    
+    DOG_ICON_R_BAT_0,
+    DOG_ICON_R_BAT_1,
+    DOG_ICON_R_BAT_2,
+    DOG_ICON_R_BAT_3,
+    DOG_ICON_R_COMPASS_NULL,
+    DOG_ICON_R_COMPASS_1,
+    DOG_ICON_R_COMPASS_2,
+    DOG_ICON_R_COMPASS_3,
+    DOG_ICON_R_COMPASS_4,
+    DOG_ICON_R_COMPASS_5,
+    DOG_ICON_R_COMPASS_6,
+    DOG_ICON_R_COMPASS_7,
+    DOG_ICON_R_COMPASS_8,
+    DOG_ICON_R_COMPASS_S1,
+    DOG_ICON_R_COMPASS_S2,
+    DOG_ICON_R_COMPASS_S3,
+    DOG_ICON_R_COMPASS_S4,
+    DOG_ICON_R_GPS_OFF,
+    DOG_ICON_R_GPS_ON,
+    DOG_ICON_R_GPS_NUM1,
+    DOG_ICON_R_GPS_NUM2,
+    DOG_ICON_R_GPS_NUM3,
+    DOG_ICON_R_GPS_NUM4,
+    DOG_ICON_R_GPS_NUM5,
+    DOG_ICON_R_GPS_NUM6,
+    DOG_ICON_R_GPS_NUM7,
+    DOG_ICON_R_GPS_NUM8,
+    DOG_ICON_R_GPS_NUM9,
+    DOG_ICON_R_GPS_NUM10,
+    DOG_ICON_R_GPS_NUM11,
+    DOG_ICON_R_GPS_NUM12,
+    DOG_ICON_R_GPS_NUM13,
+    DOG_ICON_R_GPS_NUM14,
+    DOG_ICON_R_GPS_NUM15,
+    DOG_ICON_R_GPS_NUM16,
+    DOG_ICON_R_GPS_NUM17,
+    DOG_ICON_R_GPS_NUM18,
+    DOG_ICON_R_GPS_NUM19,
+    DOG_ICON_R_GPS_NUM20,
+    DOG_ICON_R_NUM_0,
+    DOG_ICON_R_NUM_1,
+    DOG_ICON_R_NUM_2,
+    DOG_ICON_R_NUM_3,
+    DOG_ICON_R_NUM_4,
+    DOG_ICON_R_NUM_5,
+    DOG_ICON_R_NUM_6,
+    DOG_ICON_R_NUM_7,
+    DOG_ICON_R_NUM_8,
+    DOG_ICON_R_NUM_9,
+    DOG_ICON_RR_NUM_0,
+    DOG_ICON_RR_NUM_1,
+    DOG_ICON_RR_NUM_2,
+    DOG_ICON_RR_NUM_3,
+    DOG_ICON_RR_NUM_4,
+    DOG_ICON_RR_NUM_5,
+    DOG_ICON_RR_NUM_6,
+    DOG_ICON_RR_NUM_7,
+    DOG_ICON_RR_NUM_8,
+    DOG_ICON_RR_NUM_9,
+    DOG_ICON_R_RADAR_OFF,
+    DOG_ICON_R_RADAR_ON,
+    DOG_ICON_R_RADAR0_X,
+    DOG_ICON_R_RADAR1_LA,
+    DOG_ICON_R_RADAR2_KU,
+    DOG_ICON_R_RADAR3_KA,
+    DOG_ICON_R_RADAR4_K,
+    DOG_ICON_R_SIGNAL_0,
+    DOG_ICON_R_SIGNAL_1,
+    DOG_ICON_R_SIGNAL_2,
+    DOG_ICON_R_SIGNAL_3,
+    DOG_ICON_R_SIGNAL_4,
+    DOG_ICON_R_SPEED_10,
+    DOG_ICON_R_SPEED_20,
+    DOG_ICON_R_SPEED_30,
+    DOG_ICON_R_SPEED_35,
+    DOG_ICON_R_SPEED_40,
+    DOG_ICON_R_SPEED_45,
+    DOG_ICON_R_SPEED_50,
+    DOG_ICON_R_SPEED_60,
+    DOG_ICON_R_SPEED_70,
+    DOG_ICON_R_SPEED_80,
+    DOG_ICON_R_SPEED_90,
+    DOG_ICON_R_SPEED_100,
+    DOG_ICON_R_SPEED_110,
+    DOG_ICON_R_SPEED_120,
+    DOG_ICON_R_SPEED_W_NULL,
+    DOG_ICON_R_WARNING_02,
+    DOG_ICON_R_WARNING_20,
+    DOG_ICON_R_WARNING_22,
+    DOG_ICON_R_WARNING_70,
+    DOG_ICON_R_WARNING_71,
+    DOG_ICON_R_WARNING_72,
+    DOG_ICON_R_WARNING_73,
+    DOG_ICON_R_WARNING_81,
+    DOG_ICON_R_WARNING_83,
+    DOG_ICON_R_WARNING_84,
+    DOG_ICON_R_WARNING_85,
+    DOG_ICON_R_WARNING_87,
+    DOG_ICON_R_WARNING_88,
+    DOG_ICON_R_WARNING_89,
+    DOG_ICON_R_WARNING_90,
+    DOG_ICON_R_WARNING_91,
+    DOG_ICON_R_WARNING_92,
+    DOG_ICON_R_WARNING_93,
+    DOG_ICON_R_WARNING_94,
+    DOG_ICON_R_WARNING_95,
+    DOG_ICON_R_WARNING_96,
+    DOG_ICON_R_WARNING_97,
+    DOG_ICON_R_WARNING_98,
+    DOG_ICON_R_WARNING_99,
+    DOG_ICON_R_WARNING_101,
+    DOG_ICON_R_WARNING_102,
+    DOG_ICON_R_WARNING_108,
+    DOG_ICON_R_WARNING_110,
+    DOG_ICON_RADAR_MAXSPEED,
+    DOG_ICON_RADAR_MODE,
+    DOG_ICON_RADAR_MUTE,
+    DOG_ICON_RADAR_SPEED,
+    DOG_ICON_RADAR_VER,
+    DOG_ICON_RADAR_VOLUMEA,
+    DOG_ICON_R_SPEED_POINTER_0,
+    DOG_ICON_R_SPEED_POINTER_1,
+    DOG_ICON_R_SPEED_POINTER_2,
+    DOG_ICON_R_SPEED_POINTER_3,
+    DOG_ICON_R_SPEED_POINTER_4,
+    DOG_ICON_R_SPEED_POINTER_5,
+    DOG_ICON_R_SPEED_POINTER_6,
+    DOG_ICON_R_SPEED_POINTER_7,
+    DOG_ICON_R_SPEED_POINTER_8,
+    DOG_ICON_R_SPEED_POINTER_9,
+    DOG_ICON_R_SPEED_POINTER_10,
+    DOG_ICON_R_SPEED_POINTER_11,
+    DOG_ICON_R_SPEED_POINTER_12,
+    DOG_ICON_R_SPEED_POINTER_13,
+    DOG_ICON_R_SPEED_POINTER_14,
+    DOG_ICON_R_SPEED_POINTER_15,
+    DOG_ICON_R_SPEED_POINTER_16,
+    DOG_ICON_R_SPEED_POINTER_17,
+    DOG_ICON_R_SPEED_POINTER_18,
+    DOG_ICON_R_SPEED_POINTER_19,
+    DOG_ICON_R_SPEED_POINTER_20,
+    DOG_ICON_R_SPEED_POINTER_21,
+    DOG_ICON_R_SPEED_POINTER_22,
+    DOG_ICON_R_SPEED_POINTER_23,
+    DOG_ICON_R_SPEED_POINTER_24,
+    DOG_ICON_R_SPEED_POINTER_25,
+    DOG_ICON_R_SPEED_POINTER_26,
+    DOG_ICON_R_SPEED_POINTER_27,
+    DOG_ICON_R_SPEED_POINTER_28,
+    DOG_ICON_R_SPEED_POINTER_29,
+    DOG_ICON_R_SPEED_POINTER_30,
+    DOG_ICON_R_SPEED_POINTER_31,
+    DOG_ICON_R_SPEED_POINTER_32,
+    DOG_ICON_R_SPEED_POINTER_33,
+    DOG_ICON_R_SPEED_POINTER_34,
+    DOG_ICON_R_SPEED_POINTER_35,
+    DOG_ICON_R_SPEED_POINTER_36,
+    DOG_ICON_R_SPEED_POINTER_37,
+    DOG_ICON_R_SPEED_POINTER_38,
+    DOG_ICON_R_SPEED_POINTER_39,
+    DOG_ICON_NUM_MAX,
+}UI_DOG_ICON_NUM;
+
+#ifndef offsetof
+#define offsetof(type, field) ((UINT32)&(((type *)0)->field))
+#endif
+/*----´óÐ¡¶Ë×ª»»-----------------------------------------------------------------*/
+#define endianSwap16(x) (((x&0xff)<< 8)|((x&0xff00)>>8))
+#define endianSwap8(x)  (((x&0xf)<< 4)|((x&0xf0)>>4))
+/*---------------------ÆðÊ¼/½áÊø×Ö·û--------------------------------------*/
+#if defined( __WIN32__)
+#pragma pack(1)
+#endif
+
+
+
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    UINT8 startString[3]; //0x41 0x54 0x55
+	UINT16 length;
+	UINT8  type;
+}_PACKED_END START_PACKET,*PSTART_PACKET;
+
+
+
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    UINT8  CheckSum;
+    UINT8  endString[2];//0x0D 0x0A(0D 0A ²»Ëã³¤¶È,²»ËãÐ£ÑéÂë)
+}_PACKED_END END_PACKET,*PEND_PACKET;
+
+/*----Æô¶¯°²·À¿ª»úÐ­Òé£¨µç×Ó¹·<=ÐÐ³µ¼ÇÂ¼ÒÇ£©£¨type:0x20£©---------------------------------*/
+ #if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT16 status;//0 ³·Ïú°²·À    1 Æô¶¯°²·À
+    END_PACKET endData;
+}_PACKED_END SECURITY_BOOT,*PSECURITY_BOOT; //65 84 85 8 0 32 0 1 19
+
+/*----GPS ÐÅÏ¢£¨µç×Ó¹·¡úÐÐ³µ¼ÇÂ¼ÒÇ£©£¨type:0x10£©-------------------------------*/
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT8  gpsStatus;//ÎÀÐÇ×´Ì¬ ¡®A¡¯or¡®V¡¯
+    UINT32 latitude;//Î³¶È*100000
+    UINT8  latitudeHalf;//¡®N¡¯or¡®S¡¯
+    UINT32 longitude;//¾­¶È*100000
+    UINT8  longitudeHalf;// ¡®W¡¯or¡®E¡¯
+    UINT8  speed;//ÊµÊ±ËÙ¶È
+    UINT16 directionAngle;//·½Ïò½Ç¶È2 Êµ¼ÊÐÐÊ»·½Ïò(0--360)
+    UINT8  gpsNumber;//¿ÉÓÃÎÀÐÇÊý1
+    UINT16 height;//º£°Î¸ß¶È
+    UINT16 year;
+    UINT8  month;
+    UINT8  day;
+    UINT8  hour;
+    UINT8  minute;
+    UINT8  second;
+    UINT8  gsmSignal; //GSM ÐÅºÅÇ¿¶È ¼ÆËã¹«Ê½:level=Signal*(5-1)/31 + 1;  If(level>4)  Level = 4;
+    UINT8  Astatus;//A ×´Ì¬ ±£Áô
+    UINT8  warning;//±¨¾¯×´Ì¬ 1 0 ±íÊ¾ÎÞ±¨¾¯£¬1 ±íÊ¾±¨¾¯ÖÐ
+    END_PACKET endData;
+}_PACKED_END GPS_INFO,*PGPS_INFO;
+
+/*----¹Ì¶¨±¨¾¯ÐÅÏ¢£¨µç×Ó¹·¡úÐÐ³µ¼ÇÂ¼ÒÇ£©£¨type:0x11£©-------------------------------*/
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT8  warningType;// Çë¼ûÀàÐÍËµÃ÷ÎÄµµ
+    UINT16 distance;//Óëµç×ÓÑÛ¼äµÄ¾àÀë
+    UINT8  speed;// ?? ÏÞËÙÖµ
+    UINT8  currSpeed;//µ±Ç°ËÙ¶È
+    UINT16 direction ;// ·½Ïò½Ç¶È
+    UINT8  gpsAvailableNumber;//  ¿ÉÓÃÎÀÐÇÊý
+    UINT8  msg[100];// ±¨¾¯ÄÚÈÝ ÀýÈç£ºÓÐ¹Ì¶¨²âËÙÅÄÕÕ,ÏÞËÙ80¹«Àï or Ç°·½300Ã×ÓÐ´³ºìµÆ
+    END_PACKET endData;
+}_PACKED_END FIXED_ALARM,*PFIXED_ALARM;
+
+/*----À×´ï±¨¾¯ÐÅÏ¢£¨µç×Ó¹·¡úÐÐ³µ¼ÇÂ¼ÒÇ£©£¨type:0x12£©-------------------------------*/
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT8 channel;//À×´ïÆµ¶Î 0:NULL,0x40:Ka,0x20:K,0x10:X,0x80:La
+    UINT8  intensity;// 0,1,2,3
+    UINT16 frequency;//ÆµÂÊ(GHz)*100
+    UINT8  currSpeed;//µ±Ç°ËÙ¶È
+    UINT16 currDirection; //µ±Ç°·½Ïò
+    UINT8  gpsAvailableNumber;//  ¿ÉÓÃÎÀÐÇÊý
+    END_PACKET endData;
+}_PACKED_END RADAR_ALARM,*PRADAR_ALARM;
+
+/*----¹¦ÄÜ²Ëµ¥ÐÅÏ¢»ñÈ¡£¨µç×Ó¹·<=>ÐÐ³µ¼ÇÂ¼ÒÇ£©£¨type:0x13£©-------------------------------*/
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT8  muteSetting;//¾²ÒôÉèÖÃ 0:¾²Òô¹Ø±Õ,Îª 1 ¾²Òô¿ªÆô,ÔÆ¹·¾²Òô
+    UINT8  volume; //ÒôÁ¿ÉèÖÃ  1,2,3,4,5,6
+    UINT8  silentSpeed;//À×´ï¾²ÒôËÙ¶È  0,10,20,30,40,50,60
+    UINT8  speedSetting;//³¬ËÙÉèÖÃ  80,90,100,110,120,130(¹Ø±Õ)
+    UINT8  modeSetting;//Ä£Ê½ÉèÖÃ  0,1,2
+    UINT8  speedCompensation;//ËÙ¶È²¹³¥  -10~10
+    UINT8  trafficStatu;//Â·¿ö²¥±¨ÉèÖÃ  ´ËÐ­ÒéÔÝÎÞÓÃ£¬²»×ö²Ëµ¥
+    UINT16 version;//°æ±¾ºÅ  182
+    UINT8  IMEI_ID[8];//IMEI ºÅ
+    UINT8  id[6];//±¾»úºÅÂë
+    UINT8  defaultSetting;//»Ö¸´³ö³§ÉèÖÃ  0
+    END_PACKET endData;
+}_PACKED_END MENU_INFO,*PMENU_INFO;
+
+/*----ÌìÆøÔ¤±¨£¨µç×Ó¹·=>ÐÐ³µ¼ÇÂ¼ÒÇ£©£¨type:0x18£©-------------------------------*/
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT8 type;//±£Áô
+    UINT8 msg[40];/*ÎÄ×ÖÃèÊö
+    (F1 6D 33 57 02 5E 20 00 32 00 36 00 2D 00 33 00 32 00 44 64 0F 6C A6 5E 20 00
+    35 96 E8 96 20 00(ÉîÛÚÊÐ 26-32 ÉãÊÏ¶È ÕóÓê))
+    */
+    END_PACKET endData;
+}_PACKED_END WEATHER,*PWEATHER;
+
+/*----Í¶Ëß¼üÐ­Òé(µç×Ó¹·<=ÐÐ³µ¼ÇÂ¼ÒÇ) ( type:0x19)-------------------------------*/
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    START_PACKET startPack;
+    UINT8 satus;//// ÉêÇëÍ¶Ëß
+    END_PACKET endData;
+}_PACKED_END COMPLAIN,*PCOMPLAIN;
+
+#if defined( __WIN32__)
+#pragma pack()
+#endif
+
+
+
+//////////////////////////////////////////////////////////////
+//            BMP info Struct
+/////////////////////////////////////////////////////////////
+
+#ifndef RGB888_TO_RGB565
+#define RGB888_TO_RGB565(color) ((((color) >> 19) & 0x1f) << 11) \
+                                            |((((color) >> 10) & 0x3f) << 5) \
+                                            |(((color) >> 3) & 0x1f)    
+#endif
+
+#define   WIDTHUINT8S(bits) (((bits)+31)/32*4)
+
+  //14byteÎÄ¼þÍ·
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    UINT32 bfSize;           //ÎÄ¼þ´óÐ¡
+    UINT16   bfReserved1; 	//±£Áô×Ö£¬²»¿¼ÂÇ
+    UINT16   bfReserved2; 	//±£Áô×Ö£¬Í¬ÉÏ
+    UINT32 bfOffBits;        //Êµ¼ÊÎ»Í¼Êý¾ÝµÄÆ«ÒÆ×Ö½ÚÊý£¬¼´Ç°Èý¸ö²¿·Ö³¤¶ÈÖ®ºÍ
+}_PACKED_END BITMAPFILEHEADER,*PBITMAPFILEHEADER;
+#if defined( __WIN32__)
+#pragma pack()
+#endif
+//__attribute__((packed))µÄ×÷ÓÃÊÇ¸æËß±àÒëÆ÷È¡Ïû½á¹¹ÔÚ±àÒë¹ý³ÌÖÐµÄÓÅ»¯¶ÔÆë
+
+//40byteÐÅÏ¢Í·
+#if defined( __GNUC__)
+typedef   struct
+#else
+typedef _PACKED_BEGIN  struct
+#endif
+{
+    UINT32   biSize;         	//Ö¸¶¨´Ë½á¹¹ÌåµÄ³¤¶È£¬Îª40
+    INT32    biWidth;       		//Î»Í¼¿í
+    INT32    biHeight;       	//Î»Í¼¸ß
+    UINT16    biPlanes;       	//Æ½ÃæÊý£¬Îª1
+    UINT16    biBitCount;     	//²ÉÓÃÑÕÉ«Î»Êý£¬¿ÉÒÔÊÇ1£¬2£¬4£¬8£¬16£¬24£¬ÐÂµÄ¿ÉÒÔÊÇ32
+    UINT32   biCompression;  	//Ñ¹Ëõ·½Ê½£¬¿ÉÒÔÊÇ0£¬1£¬2£¬ÆäÖÐ0±íÊ¾²»Ñ¹Ëõ
+    UINT32   biSizeImage;    	//Êµ¼ÊÎ»Í¼Êý¾ÝÕ¼ÓÃµÄ×Ö½ÚÊý
+    INT32    biXPelsPerMeter;	//X·½Ïò·Ö±æÂÊ
+    INT32    biYPelsPerMeter;	//Y·½Ïò·Ö±æÂÊ
+    UINT32   biClrUsed;      	//Ê¹ÓÃµÄÑÕÉ«Êý£¬Èç¹ûÎª0£¬Ôò±íÊ¾Ä¬ÈÏÖµ(2^ÑÕÉ«Î»Êý)
+    UINT32   biClrImportant; 	//ÖØÒªÑÕÉ«Êý£¬Èç¹ûÎª0£¬Ôò±íÊ¾ËùÓÐÑÕÉ«¶¼ÊÇÖØÒªµÄ
+}_PACKED_END BITMAPINFOHEADER,*PBITMAPINFOHEADER;
+#if defined( __WIN32__)
+#pragma pack()
+#endif
+typedef struct
+{
+    //public:
+    UINT8     rgbBlue; //¸ÃÑÕÉ«µÄÀ¶É«·ÖÁ¿
+    UINT8     rgbGreen; //¸ÃÑÕÉ«µÄÂÌÉ«·ÖÁ¿
+    UINT8     rgbRed; //¸ÃÑÕÉ«µÄºìÉ«·ÖÁ¿
+    UINT8     rgbReserved; //±£ÁôÖµ
+} RGBQUAD;
+
+typedef struct
+{
+    int width;
+    int height;
+    int dataSize;
+    UINT8 *pColorData;
+    RGBQUAD *dataOfBmp;
+    RGBQUAD *pRgb;//Palette
+}LOAD_BMPBIT_STR;
+
+extern void *openBmpFile(char *strFile);
+extern UINT32 *getBimpFileHeadInfo(void);
+
+///////////////////////////////////////////////////////////////////////////////////
+/*
+   º¯ÊýÃû£º getDataStruct()
+   ²Î Êý £ºstring==>´®¿Ú»ñÈ¡µ½µÄ×Ö·û´®£¨Êý¾Ý°ü£©
+          type====>µ±Ç°Êý¾Ý°üÀàÐÍ
+   ·µ»ØÖµ:·µ»Øµ±Ç°Êý¾Ý°ü¶ÔÓ¦µÄ½á¹¹Ìå
+   Ê¾Àý£º
+       string: 0x41,0x54,0x55,0x08,0x00,0x20,0x00,0x01,0x13,'\n'
+       type:   <== 0x20
+       return: <== SECURITY_BOOT (typedef struct SECURITY_BOOT)
+*/
+extern void *getDataStruct(char *string,DATA_TYPES *type);
+extern BOOL  putDataStruct(void *m_struct,DATA_TYPES type);
+extern BOOL  isCheckCurrSumError(void);
+extern char *getCurrentIMIE_ID(void);
+extern char *getCurrentPhone_ID(void);
+
+//cloudDog_app.c API display Dog Icon 
+extern  void *cloudDog_task(void);
+
+extern void *CloudDog_Thread(void *arg);
+
+#endif
